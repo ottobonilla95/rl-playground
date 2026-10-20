@@ -1,15 +1,15 @@
-"""Keyboard play, a rule-based demo, or a saved neural policy."""
+"""Mouse aiming and hold-to-charge play, a rule-based demo, or a saved neural policy."""
 
 import argparse
 import time
 
 import gymnasium as gym
-import numpy as np
 
 from rl_playground.envs import (
     basketball,  # Registers the environment, just as a third-party user would.
 )
 from rl_playground.envs.basketball import config
+from rl_playground.envs.basketball.controls import ManualControls
 from rl_playground.envs.basketball.demo import demo_action
 
 
@@ -69,7 +69,9 @@ def main():
     base.mode_label = (
         "BALLISTIC DEMO" if args.demo else "NEURAL POLICY" if args.nn else "FREE PLAY"
     )
-    aim = np.array([config.INITIAL_POWER, config.INITIAL_ANGLE], dtype=np.float32)
+    controls = ManualControls(charge_seconds=config.CHARGE_SECONDS)
+    if not (args.demo or args.nn):
+        controls.cancel(base)
     observation, _ = env.reset(seed=args.seed)
     shots = baskets = 0
     next_shot_at = time.monotonic() + config.AUTO_SHOT_PAUSE
@@ -87,47 +89,40 @@ def main():
                     for e in events
                 ):
                     break
-                if any(
-                    e.type == pygame.KEYDOWN and e.key == pygame.K_r for e in events
-                ):
-                    observation, _ = env.reset()
-                keys = pygame.key.get_pressed()
-                if not (args.demo or args.nn) and base._ready:
-                    aim += (
-                        np.array(
-                            [
-                                int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT]),
-                                int(keys[pygame.K_UP]) - int(keys[pygame.K_DOWN]),
-                            ],
-                            np.float32,
-                        )
-                        * config.CONTROL_RATE
-                        / config.FPS
+                if args.demo or args.nn:
+                    if any(
+                        e.type == pygame.KEYDOWN and e.key == pygame.K_r for e in events
+                    ):
+                        observation, _ = env.reset()
+                    shoot = time.monotonic() >= next_shot_at or any(
+                        e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE
+                        for e in events
                     )
-                    aim = np.clip(aim, 0, 1)
-                    base.aim = aim.copy()
-                shoot = (args.demo or args.nn) and time.monotonic() >= next_shot_at
-                shoot = shoot or any(
-                    e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE for e in events
-                )
+                else:
+                    action = controls.update(
+                        env,
+                        events,
+                        pygame.mouse.get_pos(),
+                        time.monotonic(),
+                        next_seed=args.seed + shots,
+                    )
+                    shoot = action is not None
                 if not shoot:
                     env.render()
                     continue
             if not base._ready:
                 observation, _ = env.reset(seed=args.seed + shots)
-                if not (args.demo or args.nn):
-                    # Show the new wind and let the player aim before releasing.
-                    base.aim = aim.copy()
-                    continue
             if args.demo:
                 action = demo_action(observation, base.settings)
             elif policy is not None:
                 action = policy.choose_action(
                     observation, greedy=args.greedy, seed=args.seed + shots
                 )
-            else:
-                action = aim
             _, reward, _, _, info = env.step(action)
+            if not args.headless and not (args.demo or args.nn):
+                # Flight animation owns the window until landing. Ignore Space
+                # taps from that animation rather than queuing an accidental shot.
+                pygame.event.clear([pygame.KEYDOWN, pygame.KEYUP])
             if base.window_closed:
                 break
             shots += 1

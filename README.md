@@ -47,15 +47,20 @@ uv run main.py
 
 | Control | Action |
 | --- | --- |
-| Up / Down | Increase / decrease launch angle |
-| Right / Left | Increase / decrease power |
-| Space | Shoot; after the result, prepare the next shot with new wind |
+| Move mouse | Aim toward the pointer (within the allowed launch angles) |
+| Hold Space | Charge power from minimum to maximum in 1.5 seconds |
+| Release Space | Launch with the current angle and charged power |
 | R | Prepare a new shot with fresh wind |
 | Escape / close window | Quit |
 
-Power and angle remain visible at the bottom. After a miss or basket, press Space
-to see the next wind, adjust your aim, then press Space again to shoot. The dotted
-trail shows where the ball actually flew; it does not predict the answer.
+Power, angle, and a live charge bar remain visible at the bottom. Move the mouse
+to aim, hold Space to build power, then release to shoot. Full power stays capped
+until you release. After a result, the next Space press prepares fresh wind and
+begins charging the next shot; you can keep aiming while holding it. R draws new
+wind and cancels charging; switching windows cancels charging too. Wind stays
+constant throughout each shot. Set `CHARGE_SECONDS` in the basketball config to
+change the charging time. The dotted trail shows where the ball actually flew;
+it does not predict the answer.
 
 ```sh
 uv run main.py --demo                   # Physics controller; no training

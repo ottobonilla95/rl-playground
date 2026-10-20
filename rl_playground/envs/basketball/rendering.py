@@ -6,6 +6,7 @@ import numpy as np
 import pygame
 
 from rl_playground.envs.basketball import config
+from rl_playground.envs.basketball.controls import court_coordinates
 
 
 class Renderer:
@@ -33,9 +34,7 @@ class Renderer:
         c = self.canvas
         w, h = self.size
         ink, muted, orange = (27, 40, 57), (116, 128, 145), (242, 133, 55)
-        floor = h - 155
-        scale = min((w - 120) / s.world_width, (floor - 150) / s.world_height)
-        left = (w - s.world_width * scale) / 2
+        left, floor, scale = court_coordinates(s, self.size)
 
         def point(x, y):
             return (round(left + x * scale), round(floor - y * scale))
@@ -138,10 +137,11 @@ class Renderer:
         pygame.draw.circle(c, ink, origin, 13)
         if env.result == "READY":
             end = point(
-                s.launcher_x + 1.3 * math.cos(radians),
-                s.launcher_y + 1.3 * math.sin(radians),
+                s.launcher_x + 2.2 * math.cos(radians),
+                s.launcher_y + 2.2 * math.sin(radians),
             )
             pygame.draw.line(c, orange, tip, end, 2)
+            pygame.draw.circle(c, orange, end, 5, 2)
         for index in range(0, len(env.trajectory), 12):
             x, y = env.trajectory[index]
             pygame.draw.circle(c, (192, 157, 123), point(x, y), 2)
@@ -192,7 +192,9 @@ class Renderer:
                 )
 
         # Controls stay visible while the user is aiming.
-        self.text("POWER", (40, h - 105), 13, (137, 158, 183))
+        self.text(
+            "CHARGING" if env.charging else "POWER", (40, h - 105), 13, (137, 158, 183)
+        )
         self.text(f"{env.aim[0] * 100:.0f}%  /  {speed:.1f} m/s", (40, h - 83), 20)
         pygame.draw.rect(c, (46, 61, 80), (40, h - 49, 220, 5), border_radius=2)
         pygame.draw.rect(
@@ -201,9 +203,17 @@ class Renderer:
         self.text("ANGLE", (310, h - 105), 13, (137, 158, 183))
         self.text(f"{angle:.1f} degrees", (310, h - 83), 20)
         status_color = (91, 208, 155) if env.result == "BASKET!" else orange
-        self.text(env.result, (565, h - 96), 26, status_color)
-        self.text("UP/DOWN angle   LEFT/RIGHT power", (w - 342, h - 105), 13)
-        self.text("SPACE shoot / next   R new wind   ESC quit", (w - 342, h - 81), 13)
+        self.text(
+            "CHARGING" if env.charging else env.result, (520, h - 96), 26, status_color
+        )
+        if env.mode_label == "FREE PLAY":
+            self.text("MOUSE aim  |  HOLD SPACE charge", (w - 342, h - 105), 13)
+            self.text(
+                "RELEASE shoot  |  R new wind  |  ESC quit", (w - 342, h - 81), 13
+            )
+        else:
+            self.text("SPACE next shot  |  R new wind", (w - 342, h - 105), 13)
+            self.text("ESC quit", (w - 342, h - 81), 13)
         self.text(
             "ONE SHOT. READ THE WIND. FIND YOUR ARC.", (40, h - 25), 13, (104, 123, 148)
         )

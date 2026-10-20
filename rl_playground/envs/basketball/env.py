@@ -37,6 +37,7 @@ class BasketballEnv(gym.Env):
         self.observation_space = spaces.Box(-1.0, 1.0, (5,), dtype=np.float32)
         self._renderer = None
         self.window_closed = False
+        self.charging = False
         self._ready = False
         self.mode_label = "GYMNASIUM"
         self.attempts = self.baskets = 0
@@ -111,6 +112,7 @@ class BasketballEnv(gym.Env):
         self.trajectory = [tuple(self.ball)]
         self.flight_time = 0.0
         self.result = "READY"
+        self.charging = False
         self._ready = True
         if self.render_mode == "human":
             self.render()
