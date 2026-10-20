@@ -37,6 +37,29 @@ ENVIRONMENT = EnvironmentSettings()
 WINDOW_WIDTH = 1120
 WINDOW_HEIGHT = 760
 FPS = 60
+# Shared by the court, wind card, and HUD so every surface stays in dark mode.
+PALETTE = {
+    "background": (12, 15, 20),
+    "court": (22, 27, 34),
+    "panel": (29, 36, 45),
+    "border": (48, 57, 70),
+    "grid": (35, 43, 54),
+    "floor": (30, 37, 46),
+    "floor_edge": (72, 86, 104),
+    "text": (232, 238, 245),
+    "muted": (148, 163, 184),
+    "support": (93, 109, 129),
+    "launcher": (151, 169, 191),
+    "barrel": (111, 135, 162),
+    "net": (155, 175, 191),
+    "orange": (255, 153, 77),
+    "rim": (255, 119, 61),
+    "trail": (169, 119, 80),
+    "shadow": (8, 11, 16),
+    "ball_seam": (100, 50, 24),
+    "wind": (85, 211, 208),
+    "success": (91, 208, 155),
+}
 INITIAL_POWER = 0.5
 INITIAL_ANGLE = 0.65
 CHARGE_SECONDS = 1.5  # Hold Space this long for full power; release to shoot.
